@@ -3,40 +3,44 @@ from datetime import datetime
 from typing import Optional
 
 class CustomerBase(BaseModel):
-    name: str
-    role: str
+  name: str
+  is_consumer : bool
+  is_producer: bool
 
 class CustomerCreate(CustomerBase):
-    pass
+  pass
 
 class Customer(CustomerBase):
-    id: int
-    class Config:
-        orm_mode = True
+  id: int
+  deleted_at: Optional[datetime] = None
+
+  class Config:
+      from_attributes = True
 
 class ConsumptionProductionBase(BaseModel):
-    timestamp: datetime
-    consumption_kWh: Optional[float]
-    production_kWh: Optional[float]
+  timestamp: datetime
+  consumption_kWh: Optional[float]
+  production_kWh: Optional[float]
 
 class ConsumptionProductionCreate(ConsumptionProductionBase):
-    customer_id: int
+  customer_id: int
 
 class ConsumptionProduction(ConsumptionProductionBase):
-    id: int
+  id: int
+  deleted_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+  class Config:
+      from_attributes = True
 
 class SIPXPriceBase(BaseModel):
-    timestamp: datetime
-    price_EUR_kWh: float
+  timestamp: datetime
+  price_EUR_kWh: float
 
 class SIPXPriceCreate(SIPXPriceBase):
-    pass
+  pass
 
 class SIPXPrice(SIPXPriceBase):
-    id: int
+  id: int
 
-    class Config:
-        orm_mode = True
+  class Config:
+      from_attributes = True

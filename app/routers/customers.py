@@ -1,15 +1,66 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from schemas import Customer, CustomerCreate
-from crud import get_customers, create_customer
 from database import get_db
+import schemas 
+from datetime import datetime, timezone
+from models import Customer, ConsumptionProduction
 
-router = APIRouter()
+router = APIRouter(
+  prefix="/customers",
+  tags=["Customers"]
+)
 
-@router.get("/", response_model=list[Customer])
-def read_customers(db: Session = Depends(get_db)):
-    return get_customers(db)
+# naredi novo stranko
+@router.post("/")
+def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
+  db_customer = Customer(name=customer.name, is_producer=customer.is_producer, is_consumer=customer.is_consumer)
+  db.add(db_customer)
+  db.commit()
+  db.refresh(db_customer)
+  return db_customer
 
-@router.post("/", response_model=Customer)
-def add_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
-    return create_customer(db, customer)
+# pridobi podatke o stranki
+@router.get("/{customer_id}")
+def get_customer(customer_id: int, db: Session = Depends(get_db)):
+  customer = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at == None).first()
+  if not customer:
+    raise HTTPException(status_code=404, detail="Customer not found")
+  return customer
+
+# pridobi vse stranke
+@router.get("/")
+def get_customers(db: Session = Depends(get_db)):
+    return db.query(Customer).filter(Customer.deleted_at == None).all()
+
+# stranko in njeno časovno vrsto označi za izbrisano
+@router.delete("/customers/{customer_id}")
+def soft_delete_customer(customer_id: int, db: Session = Depends(get_db)):
+  customer = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at == None).first()
+  if not customer:
+      raise HTTPException(status_code=404, detail="Customer not found or already deleted")
+
+  # stranko označi za izbrisano
+  customer.deleted_at = datetime.now(timezone.utc)
+  db.query(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id).update(
+      {"deleted_at": datetime.now(timezone.utc)}
+  )
+  
+  db.commit()
+  return {"message": f"Customer {customer_id} and associated data marked as deleted"}
+
+# obnovi stranko in njeno časovno vrsto
+@router.put("/customers/{customer_id}/restore", response_model=schemas.Customer)
+def restore_customer(customer_id: int, db: Session = Depends(get_db)):
+  customer = db.query(Customer).filter(Customer.id == customer_id).first()
+  
+  if not customer:
+      raise HTTPException(status_code=404, detail="Customer not found")
+  
+  if customer.deleted_at is None:
+      raise HTTPException(status_code=400, detail="Customer is already active")
+  
+  customer.deleted_at = None  #obnovi stranko
+  db.commit()
+  db.refresh(customer)
+
+  return customer

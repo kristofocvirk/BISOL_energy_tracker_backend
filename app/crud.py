@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models import Customer, ConsumptionProduction, SIPXPrice
 from schemas import CustomerCreate, ConsumptionProductionCreate, SIPXPriceCreate
+from datetime import datetime
 
 def get_customers(db: Session):
     return db.query(Customer).all()
