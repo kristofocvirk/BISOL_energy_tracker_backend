@@ -9,7 +9,7 @@ class Customer(Base):
   name = Column(String, nullable=False)
   is_producer = Column(Boolean, nullable=False)
   is_consumer = Column(Boolean, nullable=False)
-  deleted_at = Column(DateTime, nullable=True) # soft delete column
+  deleted_at = Column(DateTime(timezone=True), nullable=True) # soft delete column
 
   data = relationship("ConsumptionProduction", back_populates="customer")
 
@@ -18,7 +18,7 @@ class ConsumptionProduction(Base):
 
   id = Column(Integer, primary_key=True, index=True)
   customer_id = Column(Integer, ForeignKey("customers.id"))
-  timestamp = Column(DateTime, nullable=False)
+  timestamp = Column(DateTime(timezone=True), nullable=False)
   consumption_kWh = Column(Float, nullable=True)
   production_kWh = Column(Float, nullable=True)
   deleted_at = Column(DateTime, nullable=True)  # Soft delete column
@@ -29,5 +29,5 @@ class SIPXPrice(Base):
   __tablename__ = "sipx_prices"
 
   id = Column(Integer, primary_key=True, index=True)
-  timestamp = Column(DateTime, nullable=False)
+  timestamp = Column(DateTime(timezone=True), nullable=False)
   price_EUR_kWh = Column(Float, nullable=False)
