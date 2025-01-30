@@ -30,19 +30,19 @@ def get_customer(customer_id: int, db: Session = Depends(get_db)):
 # pridobi vse stranke
 @router.get("/")
 def get_customers(db: Session = Depends(get_db)):
-    return db.query(Customer).filter(Customer.deleted_at == None).all()
+  return db.query(Customer).filter(Customer.deleted_at == None).all()
 
 # stranko in njeno časovno vrsto označi za izbrisano
 @router.delete("/customers/{customer_id}")
 def soft_delete_customer(customer_id: int, db: Session = Depends(get_db)):
   customer = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at == None).first()
   if not customer:
-      raise HTTPException(status_code=404, detail="Customer not found or already deleted")
+    raise HTTPException(status_code=404, detail="Customer not found or already deleted")
 
   # stranko označi za izbrisano
   customer.deleted_at = datetime.now(timezone.utc)
   db.query(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id).update(
-      {"deleted_at": datetime.now(timezone.utc)}
+    {"deleted_at": datetime.now(timezone.utc)}
   )
   
   db.commit()
@@ -54,10 +54,10 @@ def restore_customer(customer_id: int, db: Session = Depends(get_db)):
   customer = db.query(Customer).filter(Customer.id == customer_id).first()
   
   if not customer:
-      raise HTTPException(status_code=404, detail="Customer not found")
+    raise HTTPException(status_code=404, detail="Customer not found")
   
   if customer.deleted_at is None:
-      raise HTTPException(status_code=400, detail="Customer is already active")
+    raise HTTPException(status_code=400, detail="Customer is already active")
   
   customer.deleted_at = None  #obnovi stranko
   db.commit()
@@ -70,16 +70,16 @@ def restore_customer(customer_id: int, db: Session = Depends(get_db)):
 def update_customer(customer_id: int, update_data: schemas.CustomerUpdate, db: Session = Depends(get_db)):
     customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+      raise HTTPException(status_code=404, detail="Customer not found")
 
     if update_data.name is not None:
-        customer.name = update_data.name
+      customer.name = update_data.name
 
     if update_data.is_consumer is not None:
-        customer.is_consumer = update_data.is_consumer
+      customer.is_consumer = update_data.is_consumer
 
     if update_data.is_producer is not None:
-        customer.is_producer = update_data.is_producer
+      customer.is_producer = update_data.is_producer
 
     db.commit()
     db.refresh(customer)

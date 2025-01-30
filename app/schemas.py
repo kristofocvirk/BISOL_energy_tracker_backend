@@ -33,6 +33,7 @@ class ConsumptionProductionCreate(ConsumptionProductionBase):
   customer_id: int
 
 class ConsumptionProductionUpdate(ConsumptionProductionBase):
+  timestamp: Optional[datetime] = None
   consumption_kWh: Optional[float] = None
   production_kWh: Optional[float] = None
 
@@ -43,12 +44,18 @@ class ConsumptionProduction(ConsumptionProductionBase):
   class Config:
     from_attributes = True
 
+# Cost revenue schema 
+class CostRevenueSummary(BaseModel):
+  total_cost: float
+  total_revenue: float  
+
 # SIPX prices schema
 class SIPXPriceBase(BaseModel):
   timestamp: datetime
   price_EUR_kWh: float
 
 class SIPXPriceUpdate(SIPXPriceBase):
+  timestamp: Optional[datetime] = None 
   price_EUR_kWh: Optional[float] = None
 
 class SIPXPriceCreate(SIPXPriceBase):
@@ -58,4 +65,4 @@ class SIPXPrice(SIPXPriceBase):
   id: int
 
   class Config:
-      from_attributes = True
+    from_attributes = True
