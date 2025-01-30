@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+# Customer schema
 class CustomerBase(BaseModel):
   name: str
   is_consumer : bool
@@ -10,6 +11,11 @@ class CustomerBase(BaseModel):
 class CustomerCreate(CustomerBase):
   pass
 
+class CustomerUpdate(CustomerBase):
+  name : Optional[str] = None
+  is_consumer : Optional[bool] = None
+  is_producer : Optional[bool] = None
+
 class Customer(CustomerBase):
   id: int
   deleted_at: Optional[datetime] = None
@@ -17,6 +23,7 @@ class Customer(CustomerBase):
   class Config:
     from_attributes = True
 
+# Consumption production schema
 class ConsumptionProductionBase(BaseModel):
   timestamp: datetime
   consumption_kWh: Optional[float]
@@ -25,6 +32,10 @@ class ConsumptionProductionBase(BaseModel):
 class ConsumptionProductionCreate(ConsumptionProductionBase):
   customer_id: int
 
+class ConsumptionProductionUpdate(ConsumptionProductionBase):
+  consumption_kWh: Optional[float] = None
+  production_kWh: Optional[float] = None
+
 class ConsumptionProduction(ConsumptionProductionBase):
   id: int
   deleted_at: Optional[datetime] = None
@@ -32,9 +43,13 @@ class ConsumptionProduction(ConsumptionProductionBase):
   class Config:
     from_attributes = True
 
+# SIPX prices schema
 class SIPXPriceBase(BaseModel):
   timestamp: datetime
   price_EUR_kWh: float
+
+class SIPXPriceUpdate(SIPXPriceBase):
+  price_EUR_kWh: Optional[float] = None
 
 class SIPXPriceCreate(SIPXPriceBase):
   pass

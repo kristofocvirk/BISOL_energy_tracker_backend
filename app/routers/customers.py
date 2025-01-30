@@ -64,3 +64,23 @@ def restore_customer(customer_id: int, db: Session = Depends(get_db)):
   db.refresh(customer)
 
   return customer
+
+# posodobi stranko
+@router.patch("/{customer_id}", response_model=schemas.CustomerUpdate)
+def update_customer(customer_id: int, update_data: schemas.CustomerUpdate, db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    if update_data.name is not None:
+        customer.name = update_data.name
+
+    if update_data.is_consumer is not None:
+        customer.is_consumer = update_data.is_consumer
+
+    if update_data.is_producer is not None:
+        customer.is_producer = update_data.is_producer
+
+    db.commit()
+    db.refresh(customer)
+    return customer

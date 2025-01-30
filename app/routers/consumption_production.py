@@ -54,3 +54,20 @@ def get_consumption_data(customer_id: int, start: datetime, end: datetime, db: S
         raise HTTPException(status_code=404, detail="No data found for customer")
     
     return data
+
+@router.patch("/{entry_id}", response_model=schemas.ConsumptionProductionUpdate)
+def update_consumption_production(entry_id: int, update_data: schemas.ConsumptionProductionUpdate, db: Session = Depends(get_db)):
+  entry = db.query(ConsumptionProduction).filter(ConsumptionProduction.id == entry_id).first()
+    
+  if not entry:
+    raise HTTPException(status_code=404, detail="Consumption-Production entry not found")
+
+  if update_data.consumption is not None:
+    entry.consumption = update_data.consumption
+
+  if update_data.production is not None:
+    entry.production = update_data.production
+
+  db.commit()
+  db.refresh(entry)
+  return entry

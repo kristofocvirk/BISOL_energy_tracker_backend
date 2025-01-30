@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Customer, ConsumptionProduction, SIPXPrice
-from schemas import CustomerCreate, ConsumptionProductionCreate, SIPXPriceCreate
+from models import ConsumptionProduction, SIPXPrice
 from datetime import datetime
 
 def get_consumption_data(db: Session, customer_id: int, start: datetime, end: datetime):
