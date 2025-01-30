@@ -31,4 +31,3 @@ class SIPXPrice(Base):
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, nullable=False)
     price_EUR_kWh = Column(Float, nullable=False)
-    deleted_at = Column(DateTime, nullable=True) # soft delete column

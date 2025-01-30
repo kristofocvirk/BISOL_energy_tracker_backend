@@ -15,7 +15,7 @@ class Customer(CustomerBase):
   deleted_at: Optional[datetime] = None
 
   class Config:
-      from_attributes = True
+    from_attributes = True
 
 class ConsumptionProductionBase(BaseModel):
   timestamp: datetime
@@ -30,7 +30,7 @@ class ConsumptionProduction(ConsumptionProductionBase):
   deleted_at: Optional[datetime] = None
 
   class Config:
-      from_attributes = True
+    from_attributes = True
 
 class SIPXPriceBase(BaseModel):
   timestamp: datetime

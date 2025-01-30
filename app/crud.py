@@ -3,16 +3,6 @@ from models import Customer, ConsumptionProduction, SIPXPrice
 from schemas import CustomerCreate, ConsumptionProductionCreate, SIPXPriceCreate
 from datetime import datetime
 
-def get_customers(db: Session):
-    return db.query(Customer).all()
-
-def create_customer(db: Session, customer: CustomerCreate):
-    db_customer = Customer(**customer.model_dump())
-    db.add(db_customer)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
-
 def get_consumption_data(db: Session, customer_id: int, start: datetime, end: datetime):
     return db.query(ConsumptionProduction).filter(
         ConsumptionProduction.customer_id == customer_id,
