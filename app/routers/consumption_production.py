@@ -10,7 +10,7 @@ router = APIRouter(
     tags=["Consumption production"]
 )
 
-# stranki doda časovno vrsto
+# add consumption-production data to customer
 @router.post("/", response_model=schemas.ConsumptionProduction)
 def create_consumption_production(data: schemas.ConsumptionProductionCreate, db: Session = Depends(get_db)):
   # Ensure customer exists before inserting contuption-production data
