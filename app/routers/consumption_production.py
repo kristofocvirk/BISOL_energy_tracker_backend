@@ -7,90 +7,90 @@ from models import ConsumptionProduction, Customer, SIPXPrice
 from datetime import datetime
 
 router = APIRouter(
-    prefix="/consumption-production",
-    tags=["Consumption production"]
+  prefix="/consumption-production",
+  tags=["Consumption production"]
 )
 
 # add consumption-production data to customer
 @router.post("/", response_model=schemas.ConsumptionProduction)
 async def create_consumption_production(data: schemas.ConsumptionProductionCreate, db: AsyncSession = Depends(get_db)):
-    # Ensure customer exists before inserting consumption-production data
-    result = await db.execute(select(Customer).filter(Customer.id == data.customer_id))
-    customer = result.scalars().first()
-    if not customer:
-        raise HTTPException(status_code=400, detail="Customer does not exist")
+  # Ensure customer exists before inserting consumption-production data
+  result = await db.execute(select(Customer).filter(Customer.id == data.customer_id))
+  customer = result.scalars().first()
+  if not customer:
+    raise HTTPException(status_code=400, detail="Customer does not exist")
 
-    # Ensure that the customer doesn't already have consumption-production data at the given timestamp
-    result = await db.execute(select(ConsumptionProduction).filter(
-        ConsumptionProduction.customer_id == data.customer_id,
-        ConsumptionProduction.timestamp == data.timestamp
-    ))
-    consumption_production_data = result.scalars().first()
+  # Ensure that the customer doesn't already have consumption-production data at the given timestamp
+  result = await db.execute(select(ConsumptionProduction).filter(
+    ConsumptionProduction.customer_id == data.customer_id,
+    ConsumptionProduction.timestamp == data.timestamp
+  ))
+  consumption_production_data = result.scalars().first()
 
-    # If data already exists, raise an error 
-    if consumption_production_data:
-        raise HTTPException(status_code=409, detail="Data already exists")
+  # If data already exists, raise an error 
+  if consumption_production_data:
+    raise HTTPException(status_code=409, detail="Data already exists")
 
-    # Add consumption-production data
-    time_series_entry = ConsumptionProduction(**data.model_dump())
-    db.add(time_series_entry)
-    await db.commit()  # Async commit
-    await db.refresh(time_series_entry)  # Async refresh
+  # Add consumption-production data
+  time_series_entry = ConsumptionProduction(**data.model_dump())
+  db.add(time_series_entry)
+  await db.commit()  # Async commit
+  await db.refresh(time_series_entry)  # Async refresh
 
-    return time_series_entry
+  return time_series_entry
 
 # gets all consumption and production data for customer
 @router.get("/{customer_id}", response_model=list[schemas.ConsumptionProduction])
 async def get_consumption_production_all(customer_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
-    data = result.scalars().all()
-    if not data:
-        raise HTTPException(status_code=404, detail="No data found for customer")
-    return data
+  result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
+  data = result.scalars().all()
+  if not data:
+    raise HTTPException(status_code=404, detail="No data found for customer")
+  return data
 
 # get consumption and production data for a customer in a given range
 @router.get("/{customer_id}/range", response_model=list[schemas.ConsumptionProduction])
 async def get_consumption_data(customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ConsumptionProduction).filter(
-        ConsumptionProduction.customer_id == customer_id,
-        ConsumptionProduction.timestamp >= start,
-        ConsumptionProduction.timestamp <= end
-    ))
-    data = result.scalars().all()
-    if not data: 
-        raise HTTPException(status_code=404, detail="No data found for customer")
-    return data
+  result = await db.execute(select(ConsumptionProduction).filter(
+    ConsumptionProduction.customer_id == customer_id,
+    ConsumptionProduction.timestamp >= start,
+    ConsumptionProduction.timestamp <= end
+  ))
+  data = result.scalars().all()
+  if not data: 
+    raise HTTPException(status_code=404, detail="No data found for customer")
+  return data
 
 # calculates the total revenue and cost of a customer in a given range
 @router.get("/{customer_id}/total", response_model=schemas.CostRevenueSummary)
 async def calculate_cost_revenue(customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
-    data = await get_consumption_data(customer_id, start, end, db)  # Use the async version of get_consumption_data
-    result = await db.execute(select(SIPXPrice).filter(SIPXPrice.timestamp.between(start, end)))
-    prices = result.scalars().all()
-    price_map = {price.timestamp: price.price_EUR_kWh for price in prices}
+  data = await get_consumption_data(customer_id, start, end, db)  # Use the async version of get_consumption_data
+  result = await db.execute(select(SIPXPrice).filter(SIPXPrice.timestamp.between(start, end)))
+  prices = result.scalars().all()
+  price_map = {price.timestamp: price.price_EUR_kWh for price in prices}
 
-    # calculates the cost and revenue
-    total_cost = sum(d.consumption_kWh * price_map[d.timestamp] for d in data if d.consumption_kWh)
-    total_revenue = sum(d.production_kWh * price_map[d.timestamp] for d in data if d.production_kWh)
+  # calculates the cost and revenue
+  total_cost = sum(d.consumption_kWh * price_map[d.timestamp] for d in data if d.consumption_kWh)
+  total_revenue = sum(d.production_kWh * price_map[d.timestamp] for d in data if d.production_kWh)
 
-    return {"total_cost": total_cost, "total_revenue": total_revenue}
+  return {"total_cost": total_cost, "total_revenue": total_revenue}
 
 # updates a consumption-production entry
 @router.patch("/{entry_id}", response_model=schemas.ConsumptionProductionUpdate)
 async def update_consumption_production(entry_id: int, update_data: schemas.ConsumptionProductionUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.id == entry_id))
-    entry = result.scalars().first()
+  result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.id == entry_id))
+  entry = result.scalars().first()
 
-    if not entry:
-        raise HTTPException(status_code=404, detail="Consumption-Production entry not found")
+  if not entry:
+    raise HTTPException(status_code=404, detail="Consumption-Production entry not found")
 
-    if update_data.consumption_kWh is not None:
-        entry.consumption_kWh = update_data.consumption_kWh
+  if update_data.consumption_kWh is not None:
+    entry.consumption_kWh = update_data.consumption_kWh
 
-    if update_data.production_kWh is not None:
-        entry.production_kWh = update_data.production_kWh
+  if update_data.production_kWh is not None:
+    entry.production_kWh = update_data.production_kWh
 
-    await db.commit()  # Async commit
-    await db.refresh(entry)  # Async refresh
-    return entry
+  await db.commit()  # Async commit
+  await db.refresh(entry)  # Async refresh
+  return entry
 
