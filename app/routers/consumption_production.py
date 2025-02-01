@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from database import get_db  # Assuming get_db is now async
+from database import get_db 
 import schemas
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from models import ConsumptionProduction, Customer, SIPXPrice
 from datetime import datetime
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(
   prefix="/consumption-production",
@@ -13,7 +17,8 @@ router = APIRouter(
 
 # add consumption-production data to customer
 @router.post("/", response_model=schemas.ConsumptionProduction)
-async def create_consumption_production(data: schemas.ConsumptionProductionCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def create_consumption_production(request: Request, data: schemas.ConsumptionProductionCreate, db: AsyncSession = Depends(get_db)):
   # Ensure customer exists before inserting consumption-production data
   result = await db.execute(select(Customer).filter(Customer.id == data.customer_id))
   customer = result.scalars().first()
@@ -41,7 +46,8 @@ async def create_consumption_production(data: schemas.ConsumptionProductionCreat
 
 # gets all consumption and production data for customer
 @router.get("/{customer_id}", response_model=list[schemas.ConsumptionProduction])
-async def get_consumption_production_all(customer_id: int, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def get_consumption_production_all(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
   data = result.scalars().all()
   if not data:
@@ -50,7 +56,8 @@ async def get_consumption_production_all(customer_id: int, db: AsyncSession = De
 
 # get consumption and production data for a customer in a given range
 @router.get("/{customer_id}/range", response_model=list[schemas.ConsumptionProduction])
-async def get_consumption_data(customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def get_consumption_data(request: Request, customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(ConsumptionProduction).filter(
     ConsumptionProduction.customer_id == customer_id,
     ConsumptionProduction.timestamp >= start,
@@ -63,7 +70,8 @@ async def get_consumption_data(customer_id: int, start: datetime, end: datetime,
 
 # calculates the total revenue and cost of a customer in a given range
 @router.get("/{customer_id}/total", response_model=schemas.CostRevenueSummary)
-async def calculate_cost_revenue(customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def calculate_cost_revenue(request: Request, customer_id: int, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
   data = await get_consumption_data(customer_id, start, end, db)  # Use the async version of get_consumption_data
   result = await db.execute(select(SIPXPrice).filter(SIPXPrice.timestamp.between(start, end)))
   prices = result.scalars().all()
@@ -77,7 +85,8 @@ async def calculate_cost_revenue(customer_id: int, start: datetime, end: datetim
 
 # updates a consumption-production entry
 @router.patch("/{entry_id}", response_model=schemas.ConsumptionProductionUpdate)
-async def update_consumption_production(entry_id: int, update_data: schemas.ConsumptionProductionUpdate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def update_consumption_production(request: Request, entry_id: int, update_data: schemas.ConsumptionProductionUpdate, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.id == entry_id))
   entry = result.scalars().first()
 

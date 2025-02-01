@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from database import get_db  # Ensure get_db is now async
+from database import get_db 
 import schemas
 from datetime import datetime
 from models import SIPXPrice
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(
   prefix="/sipx-prices",
@@ -13,7 +17,8 @@ router = APIRouter(
 
 # creates new entry with price and timestamp
 @router.post("/", response_model=schemas.SIPXPrice)
-async def create_price_entry(data: schemas.SIPXPriceCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def create_price_entry(request: Request, data: schemas.SIPXPriceCreate, db: AsyncSession = Depends(get_db)):
   # Check if a price entry already exists for the given timestamp
   result = await db.execute(select(SIPXPrice).filter(SIPXPrice.timestamp == data.timestamp))
   existing_entry = result.scalars().first()
@@ -30,14 +35,16 @@ async def create_price_entry(data: schemas.SIPXPriceCreate, db: AsyncSession = D
 
 # gets all prices
 @router.get("/", response_model=list[schemas.SIPXPrice])
-async def get_all_prices(db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def get_all_prices(request: Request, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(SIPXPrice))
   data = result.scalars().all()
   return data
 
 # gets a range of prices from start to end
 @router.get("/range", response_model=list[schemas.SIPXPrice])
-async def get_prices_in_range(start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def get_prices_in_range(request: Request, start: datetime, end: datetime, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(SIPXPrice).filter(
     SIPXPrice.timestamp >= start,
     SIPXPrice.timestamp <= end
@@ -52,7 +59,8 @@ async def get_prices_in_range(start: datetime, end: datetime, db: AsyncSession =
 
 # gets the latest entry
 @router.get("/latest", response_model=schemas.SIPXPrice)
-async def get_latest_price(db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def get_latest_price(request: Request, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(SIPXPrice).order_by(SIPXPrice.timestamp.desc()))
   latest_entry = result.scalars().first()
 
@@ -63,7 +71,8 @@ async def get_latest_price(db: AsyncSession = Depends(get_db)):
 
 # modifies the price of an entry
 @router.patch("/{price_id}", response_model=schemas.SIPXPriceUpdate)
-async def update_sipx_price(price_id: int, update_data: schemas.SIPXPriceUpdate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def update_sipx_price(request: Request, price_id: int, update_data: schemas.SIPXPriceUpdate, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(SIPXPrice).filter(SIPXPrice.id == price_id))
   price_entry = result.scalars().first()
   
