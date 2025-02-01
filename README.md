@@ -61,3 +61,16 @@ uvicorn app.main:app --reload
 ```
 
 Visit `http://localhost:8000` in your browser to access the API.
+
+### Client test apps
+Two client test apps are available in this repository: `heatmap.py` and `scatter_plot.py`.
+
+`heatmap.py` fetches and calculates the average energy consumption for each customer, then creates
+a heatmap of average energy consumption for each day.
+
+![alt text](images/heatmap.png)
+
+`scatter_plot` fetches consumption/production data and SIPX price data and then plots a scatter plot of 
+consumption/production against SIPX price. Consumption is marked red and production is marked green. 
+
+![alt text](images/scatter_plot.png)

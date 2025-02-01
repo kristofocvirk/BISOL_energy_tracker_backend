@@ -16,3 +16,4 @@ pydantic-settings==2.7.1
 greenlet
 seaborn==0.13.2
 matplotlib==3.10.0
+httpx==0.28.1

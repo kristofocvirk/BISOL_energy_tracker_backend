@@ -51,12 +51,15 @@ async def create_consumption_production(request: Request, data: schemas.Consumpt
 @router.get("/{customer_id}", response_model=list[schemas.ConsumptionProduction])
 @limiter.limit("20/minute")
 async def get_consumption_production_all(request: Request, customer_id: int, redis: redis.Redis = Depends(get_redis_client), db: AsyncSession = Depends(get_db)):
+  # get data from redis
   redis_name = f"customer_{customer_id}_production_consumption"
   cached_data = redis.get(redis_name) 
 
+  # if it exists return json
   if cached_data:
     return json.loads(cached_data)
 
+  # database query
   result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
   data = result.scalars().all()
   if not data:
