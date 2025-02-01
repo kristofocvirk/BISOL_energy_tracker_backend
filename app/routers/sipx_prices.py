@@ -3,6 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_db 
 import schemas
+import json
+import redis
+from redis_client import get_redis_client
 from datetime import datetime
 from models import SIPXPrice
 from slowapi import Limiter
@@ -36,9 +39,18 @@ async def create_price_entry(request: Request, data: schemas.SIPXPriceCreate, db
 # gets all prices
 @router.get("/", response_model=list[schemas.SIPXPrice])
 @limiter.limit("20/minute")
-async def get_all_prices(request: Request, db: AsyncSession = Depends(get_db)):
+async def get_all_prices(request: Request, redis: redis.Redis = Depends(get_redis_client), db: AsyncSession = Depends(get_db)):
+
+  cached_data = redis.get("spix_prices")
+
+  if cached_data:
+    return json.loads(cached_data)
+
   result = await db.execute(select(SIPXPrice))
   data = result.scalars().all()
+
+  redis.set("spix_prices", json.dumps([price.to_dict() for price in data]), ex=360) 
+
   return data
 
 # gets a range of prices from start to end

@@ -3,6 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_db 
 import schemas
+import json
+import redis
+from redis_client import get_redis_client
 from datetime import datetime, timezone
 from models import Customer, ConsumptionProduction
 from slowapi import Limiter
@@ -38,9 +41,18 @@ async def get_customer(request: Request, customer_id: int, db: AsyncSession = De
 # get all customers
 @router.get("/")
 @limiter.limit("20/minute")
-async def get_customers(request: Request, db: AsyncSession = Depends(get_db)):
+async def get_all_customers(request: Request, redis: redis.Redis = Depends(get_redis_client), db: AsyncSession = Depends(get_db)):
+  cached_data = redis.get("customers")
+
+  if cached_data:
+    return json.loads(cached_data)
+
   result = await db.execute(select(Customer).filter(Customer.deleted_at == None))
-  return result.scalars().all()  # async version of query
+  data = result.scalars().all()
+
+  redis.set("customers", json.dumps([price.to_dict() for price in data]), ex=360) 
+
+  return data
 
 # gets all customers with specified name 
 @router.get("/search/", response_model=list[schemas.Customer])

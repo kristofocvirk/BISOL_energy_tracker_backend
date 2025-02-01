@@ -13,6 +13,15 @@ class Customer(Base):
 
   data = relationship("ConsumptionProduction", back_populates="customer")
 
+  def to_dict(self):
+    return {
+    "id": self.id,
+    "name": self.name,
+    "is_producer": self.is_producer,
+    "is_consumer": self.is_consumer,
+    "deleted_at": self.deleted_at
+    }
+
 class ConsumptionProduction(Base):
   __tablename__ = "consumption_production"
 
@@ -25,9 +34,26 @@ class ConsumptionProduction(Base):
 
   customer = relationship("Customer", back_populates="data")
 
+  def to_dict(self):
+    return {
+      "id": self.id,
+      "customer_id": self.customer_id, 
+      "timestamp": self.timestamp.isoformat(),  
+      "consumption_kWh": self.consumption_kWh,
+      "production_kWh": self.production_kWh, 
+      "deleted_a": self.deleted_at
+    }
+
 class SIPXPrice(Base):
   __tablename__ = "sipx_prices"
 
   id = Column(Integer, primary_key=True, index=True)
   timestamp = Column(DateTime(timezone=True), nullable=False)
   price_EUR_kWh = Column(Float, nullable=False)
+
+  def to_dict(self):
+    return {
+      "id": self.id,
+      "timestamp": self.timestamp.isoformat(),  
+      "price_EUR_kWh": self.price_EUR_kWh
+    }

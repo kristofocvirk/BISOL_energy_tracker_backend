@@ -3,6 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_db 
 import schemas
+import json
+import redis
+from redis_client import get_redis_client
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from models import ConsumptionProduction, Customer, SIPXPrice
@@ -47,11 +50,19 @@ async def create_consumption_production(request: Request, data: schemas.Consumpt
 # gets all consumption and production data for customer
 @router.get("/{customer_id}", response_model=list[schemas.ConsumptionProduction])
 @limiter.limit("20/minute")
-async def get_consumption_production_all(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
+async def get_consumption_production_all(request: Request, customer_id: int, redis: redis.Redis = Depends(get_redis_client), db: AsyncSession = Depends(get_db)):
+  redis_name = f"customer_{customer_id}_production_consumption"
+  cached_data = redis.get(redis_name) 
+
+  if cached_data:
+    return json.loads(cached_data)
+
   result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
   data = result.scalars().all()
   if not data:
     raise HTTPException(status_code=404, detail="No data found for customer")
+
+  redis.set(redis_name, json.dumps([price.to_dict() for price in data]), ex=360)
   return data
 
 # get consumption and production data for a customer in a given range
