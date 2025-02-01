@@ -17,7 +17,7 @@ router = APIRouter(
 
 # create new customer 
 @router.post("/")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def create_customer(request: Request, customer: schemas.CustomerCreate, db: AsyncSession = Depends(get_db)):
   db_customer = Customer(name=customer.name, is_producer=customer.is_producer, is_consumer=customer.is_consumer)
   db.add(db_customer)
@@ -27,7 +27,7 @@ async def create_customer(request: Request, customer: schemas.CustomerCreate, db
 
 # get information about a customer 
 @router.get("/{customer_id}")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_customer(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.id == customer_id, Customer.deleted_at == None))
   customer = result.scalars().first()  # async version of query
@@ -37,14 +37,14 @@ async def get_customer(request: Request, customer_id: int, db: AsyncSession = De
 
 # get all customers
 @router.get("/")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_customers(request: Request, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.deleted_at == None))
   return result.scalars().all()  # async version of query
 
 # gets all customers with specified name 
 @router.get("/search/", response_model=list[schemas.Customer])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def search_customer(request: Request, name: str, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.name.ilike(f"%{name}%")))
   customers = result.scalars().all()
@@ -56,7 +56,7 @@ async def search_customer(request: Request, name: str, db: AsyncSession = Depend
 
 # marks a customer and their consumption-production data as deleted
 @router.delete("/customers/{customer_id}")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def soft_delete_customer(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.id == customer_id, Customer.deleted_at == None))
   customer = result.scalars().first()
@@ -75,7 +75,7 @@ async def soft_delete_customer(request: Request, customer_id: int, db: AsyncSess
 
 # deletes a customer if they had no associated data
 @router.delete("/{customer_id}", status_code=204)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def delete_customer_if_no_data(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(ConsumptionProduction).filter(ConsumptionProduction.customer_id == customer_id))
   has_data = result.scalars().first()
@@ -96,7 +96,7 @@ async def delete_customer_if_no_data(request: Request, customer_id: int, db: Asy
 
 # restores a customer and their data
 @router.put("/customers/{customer_id}/restore", response_model=schemas.Customer)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def restore_customer(request: Request, customer_id: int, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.id == customer_id))
   customer = result.scalars().first()
@@ -115,7 +115,7 @@ async def restore_customer(request: Request, customer_id: int, db: AsyncSession 
 
 # updates the customer's name, is_consumer or is_producer
 @router.patch("/{customer_id}", response_model=schemas.CustomerUpdate)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def update_customer(request: Request, customer_id: int, update_data: schemas.CustomerUpdate, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Customer).filter(Customer.id == customer_id))
   customer = result.scalars().first()
