@@ -3,11 +3,11 @@
 This application provides an API to interact with energy consumption and production data. It allows users to access and manage customer information, production/consumption data, and the SIPX euro price over time. It is built using **FastAPI**, **PostgreSQL**, and **Redis**.
 
 ## Features
-- CRUD operations for customers (consumers, producers, or both).
+- CRUD operations for customers.
 - Access to hourly production/consumption data per customer.
 - Retrieve hourly SIPX price data.
 - Supports rate limiting.
-- Caching with redis enabled for certain operations.
+- Caching enabled for certain operations.
 
 ## Technologies
 - **FastAPI**: Python web framework for building APIs.
