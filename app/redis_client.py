@@ -2,7 +2,7 @@ import redis
 from fastapi import Depends
 
 # Define settings to load from .env
-redis_host: str = "localhost"
+redis_host: str = "redis"
 redis_port: int = 6379
 redis_db: int = 0
 

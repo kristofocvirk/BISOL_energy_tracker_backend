@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from database import get_db 
-import schemas
+from ..database import get_db 
+import app.schemas as schemas
 import json
 import redis
-from redis_client import get_redis_client
+from app.redis_client import get_redis_client
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from models import ConsumptionProduction, Customer, SIPXPrice
+from app.models import ConsumptionProduction, Customer, SIPXPrice
 from datetime import datetime
 
 limiter = Limiter(key_func=get_remote_address)

@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 from collections import defaultdict
 import asyncio
 from datetime import datetime
-from models import Customer
-import pytz
+from app.models import Customer
 
 # Load environment variables
 load_dotenv()
@@ -21,8 +20,8 @@ engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 # Create sessionmaker for async sessions
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# Load CSV
-df = pd.read_csv("data.csv", sep=",")  # Adjust separator if needed
+# Load CSV (adjust path if necessary based on Docker file location)
+df = pd.read_csv("data.csv", sep=",")  # Ensure the file is available inside Docker
 
 # Function to truncate all tables (async version)
 async def truncate_tables(engine):

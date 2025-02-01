@@ -1,9 +1,6 @@
-import asyncio
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from routers import consumption_production, customers, sipx_prices
-from database import Base, engine
+from .routers import consumption_production, customers, sipx_prices
+from .database import Base, engine
 
 app = FastAPI()
 

@@ -1,12 +1,12 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
-from database import Base
+from app.database import Base
 
 class Customer(Base):
   __tablename__ = "customers"
 
   id = Column(Integer, primary_key=True, index=True)
-  name = Column(String, nullable=False)
+  name = Column(String, unique=True, nullable=False)
   is_producer = Column(Boolean, nullable=False)
   is_consumer = Column(Boolean, nullable=False)
   deleted_at = Column(DateTime(timezone=True), nullable=True) # soft delete column
