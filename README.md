@@ -47,15 +47,11 @@ This application provides an API to interact with energy consumption and product
      docker-compose up --build
      ```
 
-### Database Configuration
-1. Create a PostgreSQL database and configure the connection details.
-2. Update the connection string in `app/main.py`:
-
-   ```python
-   DATABASE_URL = "postgresql+asyncpg://user:password@localhost/dbname"
-   ```
-
-3. The database should be initialized automatically upon first start, but if you encounter any issues, run the migrations manually.
+### Adding data to the database
+  To add the data entires present in the `data.csv` file use the following command.
+  ```bash
+  python -m app.add_customers.py 
+  ```
 
 ### Running the App
 To run the FastAPI app locally:
