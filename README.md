@@ -65,7 +65,7 @@ Visit `http://localhost:8000` in your browser to access the API.
 ### Client test apps
 Two client test apps are available in this repository: `heatmap.py` and `scatter_plot.py`.
 
-`heatmap.py` fetches and calculates the average energy consumption for each customer, then creates
+`heatmap.py` fetches and calculates the average energy consumption for each day, then creates
 a heatmap of average energy consumption for each day.
 
 ![alt text](images/heatmap.png)
